@@ -24,17 +24,23 @@ namespace :mise do
     ]
 
     on release_roles(fetch(:mise_roles)) do
+      # Spelled out against release_path rather than run inside `within`: SSHKit
+      # hands a string command containing whitespace straight to the shell, with
+      # no cd and no env, so a probe written as `[ -e mise.toml ]` would quietly
+      # inspect the SSH login directory instead of the release.
+      exists = ->(file) { "-e #{release_path.join(file)}" }
+
+      has_config = test("[ #{config_files.map(&exists).join(' -o ')} ]")
+
+      if !has_config && test("[ #{exists.call('.ruby-version')} ]")
+        warn "this revision has .ruby-version but no mise config of its own. mise does not " \
+             "read idiomatic version files unless you opt in, so unless a parent directory " \
+             "or the global config supplies one, no Ruby version resolves here. Add a " \
+             "mise.toml or .tool-versions, or run: " \
+             "mise settings add idiomatic_version_file_enable_tools ruby"
+      end
+
       within release_path do
-        has_config = test("[ #{config_files.map { |f| "-e #{f}" }.join(' -o ')} ]")
-
-        if !has_config && test("[ -e .ruby-version ]")
-          warn "this revision has .ruby-version but no mise config of its own. mise does not " \
-               "read idiomatic version files unless you opt in, so unless a parent directory " \
-               "or the global config supplies one, no Ruby version resolves here. Add a " \
-               "mise.toml or .tool-versions, or run: " \
-               "mise settings add idiomatic_version_file_enable_tools ruby"
-        end
-
         execute :mise, :install
       end
     end
