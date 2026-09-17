@@ -31,6 +31,8 @@ same way `capistrano-rbenv` does not install rbenv.
   where it is expected.
 - Adds `mise:install` after `deploy:updating`, which runs `mise install` in the new release
   so the versions that revision declares are present before anything tries to use them.
+  This installs the *tools* mise manages, not mise itself — same as the CLI command it
+  is named after.
 - Sets `MISE_EXEC_AUTO_INSTALL=0`. Mise installs missing tools on demand by default, which
   would bury a multi-minute Ruby build inside whichever command happened to run first;
   `mise:install` owns installation instead, as a step you can see.
