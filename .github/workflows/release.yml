@@ -15,10 +15,10 @@ jobs:
       id-token: write # OIDC, for RubyGems trusted publishing
       packages: write # GitHub Packages
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1.324.0
         with:
           ruby-version: ruby
           bundler-cache: true
@@ -26,7 +26,7 @@ jobs:
       # Runs `bundle exec rake release`: builds into pkg/, then pushes to
       # rubygems.org over OIDC. The tag already exists at this point, so
       # bundler's tag step is a no-op.
-      - uses: rubygems/release-gem@v1
+      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1
 
       # Optional target. RubyGems has already published by this point and that
       # cannot be undone, so a failure here must not fail the release.

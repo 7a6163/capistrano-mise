@@ -1,0 +1,8 @@
+# SHA-pinned actions do not update themselves, and a pin left alone becomes a pin
+# to a known-vulnerable version. This keeps them moving.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
