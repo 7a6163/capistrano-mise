@@ -1,0 +1,11 @@
+---
+usage: opensource
+integration:
+  name: rspec
+includes:
+  - lib
+requires:
+  - capistrano/mise/commands
+matcher:
+  subjects:
+    - Capistrano::Mise::Commands*

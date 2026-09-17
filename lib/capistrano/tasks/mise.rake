@@ -1,48 +1,35 @@
 # frozen_string_literal: true
 
+require "capistrano/mise/commands"
+
+commands = Capistrano::Mise::Commands
+
 namespace :mise do
   desc "Check that mise is usable on the target hosts"
   task :check do
-    on release_roles(fetch(:mise_roles)) do |host|
-      mise = fetch(:mise_path)
-      next if test "[ -x #{mise} ]"
+    # Read outside the `on` block: inside it, self is the SSHKit backend, and the
+    # Capistrano DSL is only reachable there because capistrano/setup includes it
+    # into Object. These are settings, not per-host values.
+    path = fetch(:mise_path)
 
-      error "mise is not executable at #{mise} on #{host}. Install mise, " \
-            "or set :mise_path if it is installed somewhere else on this host."
+    on release_roles(fetch(:mise_roles)) do |host|
+      next if test commands.executable(path)
+
+      error commands.missing_binary(path, host)
       exit 1
     end
   end
 
   desc "Install the tool versions this revision declares"
   task :install do
-    # Every filename mise looks for in one directory. It also searches parent
-    # directories and a global config, so a release holding none of these can still
-    # resolve a version - which is why their absence is a warning, not an error.
-    config_files = %w[
-      mise.toml mise.local.toml .mise.toml .mise.local.toml
-      mise/config.toml .mise/config.toml
-      .config/mise.toml .config/mise/config.toml
-      .tool-versions
-    ]
+    release = release_path
 
     on release_roles(fetch(:mise_roles)) do
-      # Spelled out against release_path rather than run inside `within`: SSHKit
-      # hands a string command containing whitespace straight to the shell, with
-      # no cd and no env, so a probe written as `[ -e mise.toml ]` would quietly
-      # inspect the SSH login directory instead of the release.
-      exists = ->(file) { "-e #{release_path.join(file)}" }
-
-      has_config = test("[ #{config_files.map(&exists).join(' -o ')} ]")
-
-      if !has_config && test("[ #{exists.call('.ruby-version')} ]")
-        warn "this revision has .ruby-version but no mise config of its own. mise does not " \
-             "read idiomatic version files unless you opt in, so unless a parent directory " \
-             "or the global config supplies one, no Ruby version resolves here. Add a " \
-             "mise.toml or .tool-versions, or run: " \
-             "mise settings add idiomatic_version_file_enable_tools ruby"
+      unless test commands.config_present(release)
+        warn commands.idiomatic_version_file_warning if test commands.idiomatic_version_file_present(release)
       end
 
-      within release_path do
+      within release do
         execute :mise, :install
       end
     end
@@ -58,7 +45,7 @@ namespace :mise do
 
     # unshift, so a command already carrying a prefix (capistrano-bundler's
     # `bundle exec`) keeps it and gains mise in front rather than losing it.
-    prefix = "#{fetch(:mise_path)} exec --"
+    prefix = commands.exec_prefix(fetch(:mise_path))
     fetch(:mise_map_bins).uniq.each do |command|
       SSHKit.config.command_map.prefix[command.to_sym].unshift(prefix)
     end

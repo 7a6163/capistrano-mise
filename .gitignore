@@ -3,3 +3,4 @@
 /.bundle/
 /coverage/
 /tmp/
+/.mutant/
