@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["github_repo"] = "ssh://github.com/7a6163/capistrano-mise"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.add_dependency "capistrano", "~> 3.0"

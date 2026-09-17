@@ -96,6 +96,18 @@ it was written. Update it by hand, and delete any `Environment="PATH=…"` line 
 old version manager's directories — `mise exec` sets up the child's `PATH` itself, and those
 directories are about to stop existing.
 
+## Releasing
+
+Bump `lib/capistrano/mise/version.rb`, commit, then tag:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+That fires `.github/workflows/release.yml`, which publishes to RubyGems (over OIDC — there
+is no API key stored anywhere), to GitHub Packages, and as a GitHub Release with the `.gem`
+attached.
+
 ## License
 
 MIT.
