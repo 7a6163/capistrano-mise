@@ -15,7 +15,7 @@ jobs:
       id-token: write # OIDC, for RubyGems trusted publishing
       packages: write # GitHub Packages
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1.324.0
@@ -30,11 +30,19 @@ jobs:
 
       # Optional target. RubyGems has already published by this point and that
       # cannot be undone, so a failure here must not fail the release.
+      # GitHub Packages wants the token as a Bearer credential under its own key,
+      # which GEM_HOST_API_KEY alone does not produce.
       - name: Push to GitHub Packages
         continue-on-error: true
         env:
-          GEM_HOST_API_KEY: ${{ secrets.GITHUB_TOKEN }}
-        run: gem push --host "https://rubygems.pkg.github.com/${{ github.repository_owner }}" pkg/*.gem
+          GEM_HOST_API_KEY: "Bearer ${{ secrets.GITHUB_TOKEN }}"
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir -p "$HOME/.gem"
+          touch "$HOME/.gem/credentials"
+          chmod 0600 "$HOME/.gem/credentials"
+          printf -- "---\n:github: ${GEM_HOST_API_KEY}\n" > "$HOME/.gem/credentials"
+          gem push --KEY github --host "https://rubygems.pkg.github.com/${OWNER}" pkg/*.gem
 
       - name: Create GitHub Release
         env:

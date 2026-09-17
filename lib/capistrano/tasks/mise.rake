@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :mise do
   desc "Check that mise is usable on the target hosts"
   task :check do
