@@ -13,12 +13,25 @@ namespace :mise do
 
   desc "Install the tool versions this revision declares"
   task :install do
-    on release_roles(fetch(:mise_roles)) do |host|
+    # Every filename mise looks for in one directory. It also searches parent
+    # directories and a global config, so a release holding none of these can still
+    # resolve a version - which is why their absence is a warning, not an error.
+    config_files = %w[
+      mise.toml mise.local.toml .mise.toml .mise.local.toml
+      mise/config.toml .mise/config.toml
+      .config/mise.toml .config/mise/config.toml
+      .tool-versions
+    ]
+
+    on release_roles(fetch(:mise_roles)) do
       within release_path do
-        if !test("[ -e mise.toml -o -e .mise.toml -o -e .tool-versions ]") && test("[ -e .ruby-version ]")
-          warn "#{host}: this revision has .ruby-version but no mise config. mise does not read " \
-               "idiomatic version files unless you opt in, so it will resolve no Ruby version here. " \
-               "Add a mise.toml or .tool-versions, or run: " \
+        has_config = test("[ #{config_files.map { |f| "-e #{f}" }.join(' -o ')} ]")
+
+        if !has_config && test("[ -e .ruby-version ]")
+          warn "this revision has .ruby-version but no mise config of its own. mise does not " \
+               "read idiomatic version files unless you opt in, so unless a parent directory " \
+               "or the global config supplies one, no Ruby version resolves here. Add a " \
+               "mise.toml or .tool-versions, or run: " \
                "mise settings add idiomatic_version_file_enable_tools ruby"
         end
 
@@ -46,6 +59,13 @@ end
 
 Capistrano::DSL.stages.each do |stage|
   after stage, "mise:map_bins"
+end
+
+# These hooks need their tasks to exist, so this must be required after
+# capistrano/deploy. Without the guard the failure is "Don't know how to build
+# task 'deploy:check'", which names nothing you would think to look at.
+unless Rake::Task.task_defined?("deploy:check")
+  raise "capistrano/mise must be required after capistrano/deploy in your Capfile."
 end
 
 after "deploy:check", "mise:check"

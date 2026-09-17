@@ -28,7 +28,10 @@ jobs:
       # bundler's tag step is a no-op.
       - uses: rubygems/release-gem@v1
 
+      # Optional target. RubyGems has already published by this point and that
+      # cannot be undone, so a failure here must not fail the release.
       - name: Push to GitHub Packages
+        continue-on-error: true
         env:
           GEM_HOST_API_KEY: ${{ secrets.GITHUB_TOKEN }}
         run: gem push --host "https://rubygems.pkg.github.com/${{ github.repository_owner }}" pkg/*.gem
