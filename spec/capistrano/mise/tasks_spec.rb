@@ -79,6 +79,43 @@ RSpec.describe "mise tasks" do
 
       expect(SSHKit.config.default_env["MISE_EXEC_AUTO_INSTALL"]).to eq("0")
     end
+
+    # SSHKit keys its map by symbol, so "bundle" and :bundle are the same command.
+    # Unshifting for both would run it as `mise exec -- mise exec -- bundle`.
+    it "wraps a command once even when it is listed as both a string and a symbol" do
+      set :mise_map_bins, ["bundle", :bundle]
+
+      invoke("mise:map_bins")
+
+      expect(SSHKit.config.command_map[:bundle]).to eq("$HOME/.local/bin/mise exec -- bundle")
+    end
+  end
+
+  describe "load:defaults" do
+    # A Capfile is evaluated before load:defaults runs, so a default written with
+    # plain `set` would silently replace a value the Capfile had already set.
+    {
+      mise_path: "/usr/bin/mise",
+      mise_roles: :app,
+      mise_map_bins: %w[bundle]
+    }.each do |key, value|
+      it "keeps a #{key} that was set before the defaults load" do
+        set key, value
+
+        invoke("load:defaults")
+
+        expect(fetch(key)).to eq(value)
+      end
+    end
+
+    it "fills in every default when nothing was set" do
+      Capistrano::Configuration.reset!
+
+      invoke("load:defaults")
+
+      expect([fetch(:mise_path), fetch(:mise_roles), fetch(:mise_map_bins)])
+        .to eq(["$HOME/.local/bin/mise", :all, %w[rake gem bundle ruby rails]])
+    end
   end
 
   describe "mise:check" do

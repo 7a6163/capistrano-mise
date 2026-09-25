@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-26
+
+### Fixed
+- A command listed in `:mise_map_bins` as both a string and a symbol, say `"bundle"`
+  and `:bundle`, was wrapped twice and ran as `mise exec -- mise exec -- bundle`. Names
+  are now normalised to symbols before de-duplicating, which is how SSHKit keys them.
+- `:mise_path` and `:mise_map_bins` set in a Capfile were overwritten when the defaults
+  loaded. All three defaults now use `set_if_empty`, as `:mise_roles` effectively
+  already did. Values set in `deploy.rb` or a stage file were never affected.
+
+### Documentation
+- `:mise_roles` limits where `mise:check` and `mise:install` run, not where the
+  `mise exec` prefix applies. SSHKit has one command map for every host, so every host
+  that runs a mapped command needs mise. The README now says so.
+
 ## [0.1.0] - 2026-09-18
 
 First release.
@@ -53,5 +68,6 @@ First release.
   backend, and the Capistrano DSL is reachable there only because
   `capistrano/setup` includes it into `Object`.
 
-[Unreleased]: https://github.com/7a6163/capistrano-mise/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/7a6163/capistrano-mise/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/7a6163/capistrano-mise/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/7a6163/capistrano-mise/releases/tag/v0.1.0

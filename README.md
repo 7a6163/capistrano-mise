@@ -43,7 +43,13 @@ same way `capistrano-rbenv` does not install rbenv.
 |---|---|---|
 | `:mise_path` | `$HOME/.local/bin/mise` | Absolute path to the mise binary. A host provisioned from a package manager has it at `/usr/bin/mise` or `/usr/local/bin/mise` and must say so. |
 | `:mise_map_bins` | `%w[rake gem bundle ruby rails]` | Which commands to run through mise. |
-| `:mise_roles` | `:all` | Which roles this applies to. |
+| `:mise_roles` | `:all` | Which roles `mise:check` and `mise:install` run on. See the note below. |
+
+**`:mise_roles` does not limit the `mise exec` prefix.** SSHKit keeps one command map
+for every host, so once `mise:map_bins` has run, `bundle`, `rake` and the rest go through
+mise wherever they run. Narrowing `:mise_roles` only narrows where mise is checked for and
+installed into. Every host that runs a mapped command needs mise, whatever its role.
+`capistrano-rbenv`'s `:rbenv_roles` behaves the same way, for the same reason.
 
 `:mise_map_bins` is Ruby-only on purpose. Adding `node` here when your repo does not declare
 node means `mise exec -- node` quietly falls back to whatever node is on the host's `PATH` —

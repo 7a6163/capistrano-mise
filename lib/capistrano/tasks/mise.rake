@@ -46,8 +46,8 @@ namespace :mise do
     # unshift, so a command already carrying a prefix (capistrano-bundler's
     # `bundle exec`) keeps it and gains mise in front rather than losing it.
     prefix = commands.exec_prefix(fetch(:mise_path))
-    fetch(:mise_map_bins).uniq.each do |command|
-      SSHKit.config.command_map.prefix[command.to_sym].unshift(prefix)
+    fetch(:mise_map_bins).map(&:to_sym).uniq.each do |command|
+      SSHKit.config.command_map.prefix[command].unshift(prefix)
     end
   end
 end
@@ -74,8 +74,8 @@ after "deploy:updating", "mise:install"
 
 namespace :load do
   task :defaults do
-    set :mise_path, "$HOME/.local/bin/mise"
-    set :mise_roles, fetch(:mise_roles, :all)
-    set :mise_map_bins, %w[rake gem bundle ruby rails]
+    set_if_empty :mise_path, "$HOME/.local/bin/mise"
+    set_if_empty :mise_roles, :all
+    set_if_empty :mise_map_bins, %w[rake gem bundle ruby rails]
   end
 end
